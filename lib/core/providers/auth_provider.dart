@@ -6,12 +6,11 @@ import 'package:tuk_gen/core/providers/client_provider.dart';
 import 'package:tuk_gen/core/providers/driver_provider.dart';
 import 'package:tuk_gen/core/models/client.dart';
 import 'package:tuk_gen/core/models/driver.dart';
-import 'package:tuk_gen/core/utils/snackbar.dart';
-import 'package:tuk_gen/design/atoms/otp_widget.dart';
-import 'package:tuk_gen/design/atoms/button_app.dart';
-import 'package:tuk_gen/fundation/color_fundation.dart';
 import 'package:tuk_gen/tokens/environment.dart' as env;
-
+import 'package:tuk_gen/core/utils/my_progress_dialog.dart';
+import 'package:progress_dialog/progress_dialog.dart';
+import 'package:tuk_gen/tuk_gen.dart';
+import 'package:tuk_gen/design/pages/login/verification_code.dart';
 class AuthProvider {
   ClientProvider _clientProvider;
   DriverProvider _driverProvider;
@@ -22,11 +21,15 @@ class AuthProvider {
   TextEditingController pin4Controller = new TextEditingController();
   TextEditingController pin5Controller = new TextEditingController();
   TextEditingController pin6Controller = new TextEditingController();
-
-  AuthProvider() {
+  BuildContext _context;
+  ProgressDialog _progressDialog;
+  AuthProvider(BuildContext context) {
     _firebaseAuth = FirebaseAuth.instance;
     _clientProvider = new ClientProvider();
     _driverProvider = new DriverProvider();
+    _context = context;
+    _progressDialog =
+        MyProgressDialog.createProgressDialog(context, 'Espere un momento...');
   }
 
   User getUser() {
@@ -43,42 +46,39 @@ class AuthProvider {
     return true;
   }
 
-  void checkIfUserIsLogged(BuildContext context, String typeUser) {
-    FirebaseAuth.instance.authStateChanges().listen((User user) {
-      // QUE EL USUARIO ESTA LOGEADO
-      if (user != null && typeUser != null) {
-        if (typeUser == 'client') {
-          Navigator.pushNamedAndRemoveUntil(context, 'home', (route) => false);
-        } else {
-          Navigator.pushNamedAndRemoveUntil(
-              context, 'driver/map', (route) => false);
+  Future<bool> checkIfUserIsAuth() async {
+    print(await getAppName());
+
+    bool isSigned = isSignedIn();
+    if (isSigned) {
+      if(env.appName=='tuky'){
+        Client client =
+        await _clientProvider.getById(getUser().uid);
+        if (client != null) {
+          print('El cliente no es nulo');
+          return true;
+        }else{
+          return await registrar();
         }
-        print('El usuario esta logeado');
-      } else {
-        print('El usuario no esta logeado');
+      }else
+
+      if(env.appName=='tuky driver'){
+        Driver driver =
+        await _driverProvider.getById(getUser().uid);
+        if (driver != null) {
+          print('El conductor no es nulo');
+          return true;
+        }else{
+          return await registrar();
+        }
       }
-    });
-  }
 
-  Future<bool> login(String email, String password) async {
-    String errorMessage;
+    } else {
 
-    try {
-      await _firebaseAuth.signInWithEmailAndPassword(
-          email: email, password: password);
-    } catch (error) {
-      print(error);
-      // CORREO INVALIDO
-      // PASSWORD INCORRECTO
-      // NO HAY CONEXION A INTERNET
-      errorMessage = error.code;
+      print('NO ESTA LOGEADO');
+
+      return false;
     }
-
-    if (errorMessage != null) {
-      return Future.error(errorMessage);
-    }
-
-    return true;
   }
 
   Future<void> signOut() async {
@@ -134,26 +134,40 @@ class AuthProvider {
     }
   }
 
-  Future<User> signInWithGoogle() async {
-    // Trigger the authentication flow
-    final GoogleSignInAccount googleUser = await GoogleSignIn().signIn();
+  Future<bool> signInWithGoogle() async {
+    _progressDialog.show();
+    String errorMessage;
+    try {
+      // Trigger the authentication flow
+      final GoogleSignInAccount googleUser = await GoogleSignIn().signIn();
 
-    // Obtain the auth details from the request
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser?.authentication;
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser?.authentication;
 
-    // Create a new credential
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth?.accessToken,
-      idToken: googleAuth?.idToken,
-    );
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth?.accessToken,
+        idToken: googleAuth?.idToken,
+      );
 
-    User user = (await _firebaseAuth.signInWithCredential(credential)).user;
-    // Once signed in, return the UserCredential
-    return user;
+      await _firebaseAuth.signInWithCredential(credential);
+      // Once signed in, return the UserCredential
+    } catch (error) {
+      print(error);
+      errorMessage = error.code;
+    }
+    _progressDialog.hide();
+    if (errorMessage != null) {
+      return Future.error(errorMessage);
+    }
+    login();
+    return true;
   }
 
-  Future<UserCredential> signInWithFacebook() async {
+  Future<bool> signInWithFacebook() async {
+    _progressDialog.show();
+    String errorMessage;
     try {
       // by default the login method has the next permissions ['email','public_profile']
       AccessToken accessToken = await FacebookAuth.instance.login();
@@ -176,83 +190,75 @@ class AuthProvider {
           print("login failed");
           break;
       }
+      errorMessage = 'error';
     }
+    _progressDialog.hide();
+    if (errorMessage != null) {
+      return Future.error(errorMessage);
+    }
+    login();
+    return true;
   }
 
-  Future<bool> signInWithPhone(String phone, BuildContext context) async {
-    await _firebaseAuth.verifyPhoneNumber(
-      phoneNumber: '+57 ' + phone,
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        // ANDROID ONLY!
-        print('llega aqui');
-        // Sign the user in (or link) with the auto-generated credential
-        await _firebaseAuth.signInWithCredential(credential);
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        print('print de eror');
-        print(e.code);
-      },
-      codeSent: (String verificationId, [int forecResendingToken]) {
-        showModalBottomSheet<void>(
-            context: context,
-            builder: (context) {
-              return Container(
-                height: MediaQuery.of(context).size.height * 0.8,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: 25),
-                      child: OTPFields(
-                        pin1: pin1Controller,
-                        pin2: pin2Controller,
-                        pin3: pin3Controller,
-                        pin4: pin4Controller,
-                        pin5: pin5Controller,
-                        pin6: pin6Controller,
-                      ),
-                    ),
-                    Container(
-                      margin:
-                          EdgeInsets.symmetric(horizontal: 30, vertical: 25),
-                      child: ButtonApp(
-                        onPressed: () async {
-                          String pin1 = pin1Controller.text.trim();
-                          String pin2 = pin2Controller.text.trim();
-                          String pin3 = pin3Controller.text.trim();
-                          String pin4 = pin4Controller.text.trim();
-                          String pin5 = pin5Controller.text.trim();
-                          String pin6 = pin6Controller.text.trim();
+  Future<bool> signInWithPhone(String phone) async {
+    _progressDialog.show();
+    String errorMessage;
+    try {
+      await _firebaseAuth.verifyPhoneNumber(
+        phoneNumber: '+57 ' + phone,
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          // ANDROID ONLY!
+          print('llega aqui');
+          // Sign the user in (or link) with the auto-generated credential
+          await _firebaseAuth.signInWithCredential(credential);
+          _progressDialog.hide();
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          print('print de eror');
+          print(e.code);
+          _progressDialog.hide();
+        },
+        codeSent: (String verificationId, [int forecResendingToken]) {
+          _progressDialog.hide();
+          sheetCode(_context,verificationId,this,_firebaseAuth);
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          print('----------------time out------------');
+        },
+      );
+    } catch (error) {
+      print(error);
+      errorMessage = error.code;
+    }
+    if (errorMessage != null) {
+      return Future.error(errorMessage);
+    }
 
-                          String code = '$pin1$pin2$pin3$pin4$pin5$pin6';
+    return true;
+  }
 
-                          final credential = PhoneAuthProvider.credential(
-                              verificationId: verificationId, smsCode: code);
-                          final userCredential = await _firebaseAuth
-                              .signInWithCredential(credential);
-                          final user = userCredential.user;
-                          if (user != null) {
-                            return user;
-                          } else {
-                            print('user is null');
-                            Navigator.of(context).pop();
-                          }
-                        },
-                        text: 'Registrar ahora',
-                        colors: [SECUNDARIO, PRIMARIO, ACCENT2, ACCENT3],
-                        textColor: Colors.white,
-                      ),
-                    )
-                  ],
-                ),
-              );
-            });
-      },
-      codeAutoRetrievalTimeout: (String verificationId) {
-        print('time out------------');
-      },
-    );
+  void login() async {
+    try {
+      if (await checkIfUserIsAuth()) {
+        // CREO QUE ESTO DEJA DE SER NECESARIO
+        Client client = await _clientProvider.getById(getUser().uid);
 
-    return null;
+        if (client != null) {
+          Navigator.pushNamedAndRemoveUntil(_context, 'home', (route) => false);
+        } else {
+          //TODO: este debe enviar a la ventana de completar info
+          Navigator.pushNamedAndRemoveUntil(_context, 'home', (route) => false);
+        }
+      } else {
+        /*
+          ENTRA AQUI CUANDO EL USARIO ES RECIEN CREADO PERO NO ENTIENDO POR QUE================================================
+         */
+
+        print("retorno false tras crear el cliente=================================================================================");
+        Navigator.pushNamedAndRemoveUntil(_context, 'home', (route) => false);
+      }
+    } catch (error) {
+      print('Error: $error');
+    }
   }
 }

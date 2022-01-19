@@ -6,6 +6,7 @@ import 'package:sign_button/sign_button.dart';
 import 'package:tuk_gen/design/pages/login/login_controller.dart';
 import 'package:tuk_gen/design/atoms/button_app.dart';
 import 'package:tuk_gen/fundation/color_fundation.dart';
+import 'package:tuk_gen/design/organisms/custom_keyboard/custom_keyboard.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -14,15 +15,19 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   LoginController _con = new LoginController();
+  String text = '';
+  FocusNode _focus = FocusNode();
+  OverlayState overlayState;
+  OverlayEntry overlayEntry;
 
   @override
   void initState() {
     super.initState();
-    print('INIT STATE');
-
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
       _con.init(context);
     });
+    _focus.addListener(_onFocusChange);
+    overlayState = Overlay.of(context);
   }
 
   @override
@@ -34,23 +39,27 @@ class _LoginPageState extends State<LoginPage> {
       //appBar: AppBar(automaticallyImplyLeading: false),
       body: Stack(
         children: [
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                _bannerApp(),
-                _textDescription(),
-                _textLogin(),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                _textFieldPhone(),
-                _buttonLogin(),
-                _socialButtons(),
-                //_textFieldEmail(),
-                //_textFieldPassword(),
-                //
-                //_textDontHaveAccount(),
-                //_textNotpassword(),
-                _slogan()
-              ],
+          GestureDetector(
+            onTap: () {
+              FocusScope.of(context).unfocus();
+              if (overlayEntry != null) {
+                overlayEntry.remove();
+                overlayEntry = null;
+              }
+            },
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _bannerApp(),
+                  _textDescription(),
+                  _textLogin(),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.015),
+                  _textFieldPhone(),
+                  _buttonLogin(),
+                  _socialButtons(),
+                  _slogan(),
+                ],
+              ),
             ),
           ),
           new Positioned(
@@ -69,11 +78,24 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  Widget _slogan() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 0),
+      alignment: Alignment.topCenter,
+      child: Image.asset(
+        'assets/img/slogan.png',
+        width: 250,
+        height: 100,
+      ),
+    );
+  }
+
   Widget _socialButtons() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 30, vertical: 30),
       child: Column(
         children: [
+          //TODO: acomodar  el torcido de los botones
           Row(children: <Widget>[
             Expanded(
                 child: Divider(height: 30, endIndent: 20, color: Colors.black)),
@@ -82,58 +104,34 @@ class _LoginPageState extends State<LoginPage> {
             Expanded(
                 child: Divider(height: 30, indent: 20, color: Colors.black)),
           ]),
-          Row(
-            //TODO: conectar los logins
-            children: [
-              Container(
-                alignment: Alignment.centerLeft,
-                child: SignInButton(
-                    buttonType: ButtonType.google,
-                    width: 130,
-                    btnText: 'Google',
-                    onPressed: () {
-                      _con.loginWithGoogle();
-                    }),
-              ),
-              Container(
-                alignment: Alignment.centerRight,
-                child: SignInButton(
-                    buttonType: ButtonType.facebook,
-                    width: 130,
-                    btnText: 'Facebook',
-                    onPressed: () {
-                      _con.loginWithFacebook();
-                    }),
-              )
-            ],
+          Container(
+            alignment: Alignment.center,
+            child: Row(
+              children: [
+                Container(
+                  alignment: Alignment.centerLeft,
+                  child: SignInButton(
+                      buttonType: ButtonType.google,
+                      width: 130,
+                      btnText: 'Google',
+                      onPressed: () {
+                        _con.loginWithGoogle();
+                      }),
+                ),
+                Container(
+                  alignment: Alignment.centerRight,
+                  child: SignInButton(
+                      buttonType: ButtonType.facebook,
+                      width: 130,
+                      btnText: 'Facebook',
+                      onPressed: () {
+                        _con.loginWithFacebook();
+                      }),
+                )
+              ],
+            ),
           )
         ],
-      ),
-    );
-  }
-
-  Widget _textNotpassword() {
-    return GestureDetector(
-      onTap: _con.goToConfirmEmailPage,
-      child: Container(
-        margin: EdgeInsets.only(bottom: 20),
-        child: Text(
-          '¿Olvidaste tu Contraseña?',
-          style: TextStyle(fontSize: 18, color: Colors.grey[800]),
-        ),
-      ),
-    );
-  }
-
-  Widget _textDontHaveAccount() {
-    return GestureDetector(
-      onTap: _con.goToRegisterPage,
-      child: Container(
-        margin: EdgeInsets.only(bottom: 20),
-        child: Text(
-          '¿No tienes cuenta?',
-          style: TextStyle(fontSize: 18, color: Colors.grey[800]),
-        ),
       ),
     );
   }
@@ -142,7 +140,14 @@ class _LoginPageState extends State<LoginPage> {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
       child: ButtonApp(
-        onPressed: _con.loginWithPhone,
+        onPressed: () {
+          FocusScope.of(context).unfocus();
+          if (overlayEntry != null) {
+            overlayEntry.remove();
+            overlayEntry = null;
+          }
+          _con.loginWithPhone();
+        },
         text: 'Iniciar sesion',
         color: PRIMARIO,
         textColor: Colors.white,
@@ -156,49 +161,19 @@ class _LoginPageState extends State<LoginPage> {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 30),
       child: TextField(
-        controller: _con.phoneController,
-        keyboardType: TextInputType.number,
-        decoration: InputDecoration(
-            hintText: '3112334455',
-            labelText: 'Telefono',
-            labelStyle: TextStyle(fontSize: 23),
-            suffixIcon: Icon(
-              Icons.phone,
-              color: PRIMARIO,
-            )),
-      ),
-    );
-  }
-
-  Widget _textFieldEmail() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 30),
-      child: TextField(
-        controller: _con.emailController,
-        decoration: InputDecoration(
-            hintText: 'correo@gmail.com',
-            labelText: 'Correo electronico',
-            suffixIcon: Icon(
-              Icons.email_outlined,
-              color: PRIMARIO,
-            )),
-      ),
-    );
-  }
-
-  Widget _textFieldPassword() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-      child: TextField(
-        obscureText: true,
-        controller: _con.passwordController,
-        decoration: InputDecoration(
-            labelText: 'Contraseña',
-            suffixIcon: Icon(
-              Icons.lock_open_outlined,
-              color: PRIMARIO,
-            )),
-      ),
+          focusNode: _focus,
+          showCursor: true,
+          readOnly: true,
+          controller: _con.phoneController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+              hintText: '3112334455',
+              labelText: 'Telefono',
+              labelStyle: TextStyle(fontSize: 23),
+              suffixIcon: Icon(
+                Icons.phone,
+                color: PRIMARIO,
+              ))),
     );
   }
 
@@ -210,18 +185,6 @@ class _LoginPageState extends State<LoginPage> {
         'Continua con tu',
         style: TextStyle(
             color: Colors.black87, fontSize: 24, fontFamily: 'NimbusSans'),
-      ),
-    );
-  }
-
-  Widget _slogan() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 0),
-      alignment: Alignment.topCenter,
-      child: Image.asset(
-        'assets/img/slogan.png',
-        width: 250,
-        height: 100,
       ),
     );
   }
@@ -272,5 +235,109 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+  }
+
+  void _insertText(String myText) {
+    final text = _con.phoneController.text;
+    final textSelection = _con.phoneController.selection;
+    final newText = text.replaceRange(
+      textSelection.start,
+      textSelection.end,
+      myText,
+    );
+    final myTextLength = myText.length;
+    _con.phoneController.text = newText;
+    _con.phoneController.selection = textSelection.copyWith(
+      baseOffset: textSelection.start + myTextLength,
+      extentOffset: textSelection.start + myTextLength,
+    );
+  }
+
+  void _backspace() {
+    final text = _con.phoneController.text;
+    final textSelection = _con.phoneController.selection;
+    final selectionLength = textSelection.end - textSelection.start;
+
+    // There is a selection.
+    if (selectionLength > 0) {
+      final newText = text.replaceRange(
+        textSelection.start,
+        textSelection.end,
+        '',
+      );
+      _con.phoneController.text = newText;
+      _con.phoneController.selection = textSelection.copyWith(
+        baseOffset: textSelection.start,
+        extentOffset: textSelection.start,
+      );
+      return;
+    }
+
+    // The cursor is at the beginning.
+    if (textSelection.start == 0) {
+      return;
+    }
+
+    // Delete the previous character
+    final previousCodeUnit = text.codeUnitAt(textSelection.start - 1);
+    final offset = _isUtf16Surrogate(previousCodeUnit) ? 2 : 1;
+    final newStart = textSelection.start - offset;
+    final newEnd = textSelection.start;
+    final newText = text.replaceRange(
+      newStart,
+      newEnd,
+      '',
+    );
+    _con.phoneController.text = newText;
+    _con.phoneController.selection = textSelection.copyWith(
+      baseOffset: newStart,
+      extentOffset: newStart,
+    );
+  }
+
+  bool _isUtf16Surrogate(int value) {
+    return value & 0xF800 == 0xD800;
+  }
+
+  void _showOverlay() async {
+// Declaring and Initializing OverlayState
+    // and OverlayEntry objects
+
+    overlayEntry = OverlayEntry(builder: (context) {
+      return Positioned(
+        child: Container(
+          alignment: Alignment.bottomCenter,
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height * 0.30,
+          child: CustomKeyboard(
+            onTextInput: (myText) {
+              _insertText(myText);
+            },
+            onBackspace: () {
+              _backspace();
+            },
+            onKeyboardHide: () {
+              FocusScope.of(context).unfocus();
+              if (overlayEntry != null) {
+                overlayEntry.remove();
+                overlayEntry = null;
+              }
+            },
+          ),
+        ),
+      );
+    });
+    overlayState.insert(overlayEntry);
+  }
+
+  void _onFocusChange() {
+    if (_focus.hasFocus) _showOverlay();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _focus.removeListener(_onFocusChange);
+    _focus.dispose();
   }
 }

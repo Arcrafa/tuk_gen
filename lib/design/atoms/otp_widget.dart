@@ -90,6 +90,8 @@ class _OTPFieldsState extends State<OTPFields> {
                 height: 50,
 
                 child: TextFormField(
+                  showCursor: true,
+                  readOnly: true,
                   controller: widget.pin1,
                   autofocus: true,
                   style: pinStyle,
@@ -109,6 +111,8 @@ class _OTPFieldsState extends State<OTPFields> {
                 height: 50,
 
                 child: TextFormField(
+                  showCursor: true,
+                  readOnly: true,
                   controller: widget.pin2,
                   focusNode: pin2FN,
                   style: pinStyle,
@@ -126,6 +130,8 @@ class _OTPFieldsState extends State<OTPFields> {
                 height: 50,
 
                 child: TextFormField(
+                  showCursor: true,
+                  readOnly: true,
                   controller: widget.pin3,
                   focusNode: pin3FN,
                   style: pinStyle,
@@ -143,6 +149,8 @@ class _OTPFieldsState extends State<OTPFields> {
                 height: 50,
 
                 child: TextFormField(
+                  showCursor: true,
+                  readOnly: true,
                   controller: widget.pin4,
                   focusNode: pin4FN,
                   style: pinStyle,
@@ -157,6 +165,8 @@ class _OTPFieldsState extends State<OTPFields> {
                 height: 50,
 
                 child: TextFormField(
+                  showCursor: true,
+                  readOnly: true,
                   controller: widget.pin5,
                   focusNode: pin5FN,
                   style: pinStyle,
@@ -170,6 +180,8 @@ class _OTPFieldsState extends State<OTPFields> {
                 width: 50,
                 height: 50,
                 child: TextFormField(
+                  showCursor: true,
+                  readOnly: true,
                   controller: widget.pin6,
                   focusNode: pin6FN,
                   style: pinStyle,

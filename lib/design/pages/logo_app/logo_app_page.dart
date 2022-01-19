@@ -1,14 +1,7 @@
 import 'package:flutter/animation.dart';
 import 'package:flutter/material.dart';
-import 'package:progress_dialog/progress_dialog.dart';
-import 'package:tuk_gen/core/models/client.dart';
-import 'package:tuk_gen/core/models/driver.dart';
 import 'package:tuk_gen/core/providers/auth_provider.dart';
-import 'package:tuk_gen/core/providers/client_provider.dart';
-import 'package:tuk_gen/core/providers/driver_provider.dart';
 
-import 'package:tuk_gen/tokens/environment.dart' as env;
-import 'package:tuk_gen/tuk_gen.dart';
 class LogoApp extends StatefulWidget {
   const LogoApp({Key key}) : super(key: key);
 
@@ -19,25 +12,15 @@ class LogoApp extends StatefulWidget {
 class _LogoAppState extends State<LogoApp> with SingleTickerProviderStateMixin {
   Animation<double> animation;
   AnimationController controller;
-
   AuthProvider _authProvider;
-
-  ClientProvider _clientProvider;
-  DriverProvider _driverProvider;
-
   Future<bool> _isSigned;
-  ProgressDialog _progressDialog;
-
-
 
   @override
   void initState() {
     super.initState();
-    _authProvider = new AuthProvider();
-    _clientProvider = new ClientProvider();
-    _driverProvider = new DriverProvider();
+    _authProvider = new AuthProvider(context);
 
-    _isSigned = checkIfUserIsAuth();
+    _isSigned = _authProvider.checkIfUserIsAuth();
 
     controller =
         AnimationController(duration: const Duration(seconds: 7), vsync: this);
@@ -75,46 +58,12 @@ class _LogoAppState extends State<LogoApp> with SingleTickerProviderStateMixin {
             height: double.infinity,
             width: double.infinity,
             child: Image.asset("assets/gif/splash.gif",
-                gaplessPlayback: true, fit: BoxFit.fill)));
+                gaplessPlayback: true, fit: BoxFit.cover)));
   }
 
   @override
   void dispose() {
     controller.dispose();
     super.dispose();
-  }
-
-  Future<bool> checkIfUserIsAuth() async {
-    print(await getAppName());
-    bool isSigned = _authProvider.isSignedIn();
-    if (isSigned) {
-      if(env.appName=='tuky'){
-        Client client =
-        await _clientProvider.getById(_authProvider.getUser().uid);
-        if (client != null) {
-          print('El cliente no es nulo');
-          return true;
-        }else{
-          return await _authProvider.registrar();
-        }
-      }else
-
-      if(env.appName=='tuky driver'){
-        Driver driver =
-        await _driverProvider.getById(_authProvider.getUser().uid);
-        if (driver != null) {
-          print('El conductor no es nulo');
-          return true;
-        }else{
-          return await _authProvider.registrar();
-        }
-      }
-
-    } else {
-
-      print('NO ESTA LOGEADO');
-
-      return false;
-    }
   }
 }

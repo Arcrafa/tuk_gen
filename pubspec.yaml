@@ -37,7 +37,7 @@ dependencies:
   sign_button: ^1.0.2
   google_sign_in: ^4.5.1
   flutter_facebook_auth: ^2.0.2
-
+  numeric_keyboard: ^1.0.1
 
   #dependencias propias del paquete tuk_gen
   package_info: ^0.4.3+4
