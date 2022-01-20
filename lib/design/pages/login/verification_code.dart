@@ -14,22 +14,31 @@ TextEditingController pin4Controller = new TextEditingController();
 TextEditingController pin5Controller = new TextEditingController();
 TextEditingController pin6Controller = new TextEditingController();
 
-String sheetCode(context,verificationId,AuthProvider authProvider,FirebaseAuth firebaseAuth){
+String sheetCode(context, verificationId, AuthProvider authProvider,
+    FirebaseAuth firebaseAuth) {
   String errorMessage;
+  List<String> code = ['-', '-', '-', '-', '-', '-'];
+  int indexCode = 0;
+  pin1Controller.text = code[0];
+  pin2Controller.text = code[1];
+  pin3Controller.text = code[2];
+  pin4Controller.text = code[3];
+  pin5Controller.text = code[4];
+  pin6Controller.text = code[5];
 
   showModalBottomSheet<void>(
       context: context,
-      isScrollControlled:true,
+      isScrollControlled: true,
       //barrierColor:TRANSPARENTE,
-      backgroundColor:TRANSPARENTE,
+      backgroundColor: TRANSPARENTE,
       builder: (context) {
-        return Wrap(
-          children: [ClipPath(
-            clipper: WaveClipperOne(reverse: true,flip: true),
+        return Wrap(children: [
+          ClipPath(
+            clipper: WaveClipperOne(reverse: true, flip: true),
             child: Container(
               color: Colors.white,
-              margin:  EdgeInsets.only(top: 10),
-              height: MediaQuery.of(context).size.height*0.60,
+              margin: EdgeInsets.only(top: 10),
+              height: MediaQuery.of(context).size.height * 0.60,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -45,30 +54,21 @@ String sheetCode(context,verificationId,AuthProvider authProvider,FirebaseAuth f
                     ),
                   ),
                   Container(
-                    margin:
-                    EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                    margin: EdgeInsets.symmetric(horizontal: 30, vertical: 20),
                     child: ButtonApp(
                       onPressed: () async {
-                        String pin1 = pin1Controller.text.trim();
-                        String pin2 = pin2Controller.text.trim();
-                        String pin3 = pin3Controller.text.trim();
-                        String pin4 = pin4Controller.text.trim();
-                        String pin5 = pin5Controller.text.trim();
-                        String pin6 = pin6Controller.text.trim();
-
-                        String code = '$pin1$pin2$pin3$pin4$pin5$pin6';
                         try {
-
                           final credential = PhoneAuthProvider.credential(
                               verificationId: verificationId,
-                              smsCode: code);
-                          await firebaseAuth
-                              .signInWithCredential(credential);
+                              smsCode: code.join(''));
+                          await firebaseAuth.signInWithCredential(credential);
+
+                          authProvider.login();
                         } catch (error) {
                           print(error);
-                          errorMessage= error.code;
+                          errorMessage = error.code;
                         }
-                        authProvider.login();
+
                       },
                       text: 'Verificar codigo',
                       colors: [SECUNDARIO, PRIMARIO, ACCENT2, ACCENT3],
@@ -77,12 +77,27 @@ String sheetCode(context,verificationId,AuthProvider authProvider,FirebaseAuth f
                   ),
                   CustomKeyboard(
                     onTextInput: (myText) {
-                      //TODO: implementar esta vaina para que cuando escriban si se inserte los numeros
+                      print(myText);
+                      code[indexCode] = myText;
+                      indexCode++;
 
-                      // _insertText(myText);
+                      pin1Controller.text = code[0];
+                      pin2Controller.text = code[1];
+                      pin3Controller.text = code[2];
+                      pin4Controller.text = code[3];
+                      pin5Controller.text = code[4];
+                      pin6Controller.text = code[5];
                     },
                     onBackspace: () {
-                      //_backspace();
+                      if (indexCode > 0) indexCode--;
+                      code[indexCode] = '-';
+
+                      pin1Controller.text = code[0];
+                      pin2Controller.text = code[1];
+                      pin3Controller.text = code[2];
+                      pin4Controller.text = code[3];
+                      pin5Controller.text = code[4];
+                      pin6Controller.text = code[5];
                     },
                     onKeyboardHide: () {
                       //FocusScope.of(context).unfocus();
@@ -93,8 +108,7 @@ String sheetCode(context,verificationId,AuthProvider authProvider,FirebaseAuth f
               ),
             ),
           ),
-          ]
-        );
+        ]);
       });
-  return  errorMessage;
+  return errorMessage;
 }

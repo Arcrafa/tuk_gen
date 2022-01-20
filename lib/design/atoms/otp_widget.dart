@@ -90,7 +90,8 @@ class _OTPFieldsState extends State<OTPFields> {
                 height: 50,
 
                 child: TextFormField(
-                  showCursor: true,
+                  enabled : false,
+                  showCursor: false,
                   readOnly: true,
                   controller: widget.pin1,
                   autofocus: true,
@@ -111,7 +112,8 @@ class _OTPFieldsState extends State<OTPFields> {
                 height: 50,
 
                 child: TextFormField(
-                  showCursor: true,
+                  enabled : false,
+                  showCursor: false,
                   readOnly: true,
                   controller: widget.pin2,
                   focusNode: pin2FN,
@@ -130,7 +132,8 @@ class _OTPFieldsState extends State<OTPFields> {
                 height: 50,
 
                 child: TextFormField(
-                  showCursor: true,
+                  enabled : false,
+                  showCursor: false,
                   readOnly: true,
                   controller: widget.pin3,
                   focusNode: pin3FN,
@@ -149,7 +152,8 @@ class _OTPFieldsState extends State<OTPFields> {
                 height: 50,
 
                 child: TextFormField(
-                  showCursor: true,
+                  enabled : false,
+                  showCursor: false,
                   readOnly: true,
                   controller: widget.pin4,
                   focusNode: pin4FN,
@@ -165,7 +169,8 @@ class _OTPFieldsState extends State<OTPFields> {
                 height: 50,
 
                 child: TextFormField(
-                  showCursor: true,
+                  enabled : false,
+                  showCursor: false,
                   readOnly: true,
                   controller: widget.pin5,
                   focusNode: pin5FN,
@@ -180,7 +185,8 @@ class _OTPFieldsState extends State<OTPFields> {
                 width: 50,
                 height: 50,
                 child: TextFormField(
-                  showCursor: true,
+                  enabled : false,
+                  showCursor: false,
                   readOnly: true,
                   controller: widget.pin6,
                   focusNode: pin6FN,

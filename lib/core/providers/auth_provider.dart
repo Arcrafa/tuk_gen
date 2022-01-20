@@ -220,7 +220,7 @@ class AuthProvider {
         },
         codeSent: (String verificationId, [int forecResendingToken]) {
           _progressDialog.hide();
-          sheetCode(_context,verificationId,this,_firebaseAuth);
+          errorMessage=sheetCode(_context,verificationId,this,_firebaseAuth);
         },
         codeAutoRetrievalTimeout: (String verificationId) {
           print('----------------time out------------');
